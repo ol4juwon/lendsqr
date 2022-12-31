@@ -5,11 +5,11 @@
 exports.up = function (knex) {
   return knex.schema.createTable('transactions', function (table) {
     table.uuid('id', { primaryKey: true });
-    table.float('amount', 14, 2).defaultTo(0.0).notNullable();
+    table.float('amount', 14, 2).notNullable();
     table.enu('status', ['pending', 'failed', 'successful']).notNullable();
     table.string('gateway', 255).notNullable();
-    table.string('channel', 4).notNullable();
-    table.string('user_id', 4).notNullable();
+    table.string('channel', 255).notNullable();
+    table.string('user_id', 255).notNullable();
     table
       .timestamp('created_at', { precision: 6, useTz: true })
       .defaultTo(knex.fn.now(6));

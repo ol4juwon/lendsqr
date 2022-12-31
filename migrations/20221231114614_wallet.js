@@ -4,7 +4,7 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable('wallet', function (table) {
-    table.increments('id');
+    table.uuid('id', { primaryKey: true });
     table.string('balance', 255).notNullable();
     table.string('user_id', 255).unique().notNullable();
     table

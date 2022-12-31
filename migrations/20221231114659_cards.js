@@ -4,16 +4,16 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable('cards', function (table) {
-    table.increments('id');
+    table.uuid('id', { primaryKey: true });
     table.string('gateway', 255).notNullable();
-    table.string('cardAuth', 255).notNullable();
+    table.string('cardAuth', 255).unique().notNullable();
     table.string('bank', 255).notNullable();
     table.string('last4', 4).notNullable();
     table.string('cardType', 255).notNullable();
     table.string('customer', 255).notNullable();
     table.string('email', 255).notNullable();
     table.string('auth', 255).notNullable();
-    table.string('user_id', 255).unique().notNullable();
+    table.string('user_id', 255).notNullable();
     table
       .timestamp('created_at', { precision: 6, useTz: true })
       .defaultTo(knex.fn.now(6));
