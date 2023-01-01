@@ -15,9 +15,10 @@ module.exports = {
   staging: {
     client: 'mysql',
     connection: {
+      host: '127.0.0.1',
+      user: 'ola',
+      password: 'concheradmin',
       database: 'lendsqr',
-      user: 'root',
-      password: 'admin1234',
     },
     pool: {
       min: 2,
@@ -31,9 +32,10 @@ module.exports = {
   production: {
     client: 'mysql',
     connection: {
+      host: '127.0.0.1',
+      user: 'ola',
+      password: 'concheradmin',
       database: 'lendsqr',
-      user: 'root',
-      password: 'admin1234',
     },
     pool: {
       min: 2,

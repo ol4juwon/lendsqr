@@ -6,6 +6,11 @@ import { UsersModule } from './users/users.module';
 import { WalletModule } from './wallet/wallet.module';
 import { CardsModule } from './cards/cards.module';
 import { PaystackModule } from './paystack/paystack.module';
+import { AuthService } from './auth/auth.service';
+import { AuthModule } from './auth/auth.module';
+import { AuthController } from './auth/auth.controller';
+import { UsersService } from './users/users.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -17,17 +22,18 @@ import { PaystackModule } from './paystack/paystack.module';
         useNullAsDefault: true,
         connection: {
           host: '127.0.0.1',
-          user: 'root',
-          password: 'root',
-          database: 'nest',
+          user: 'ola',
+          password: 'concheradmin',
+          database: 'lendsqr',
         },
       },
     }),
     WalletModule,
     CardsModule,
     PaystackModule,
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AuthController],
+  providers: [AppService, AuthService, UsersService, JwtService],
 })
 export class AppModule {}
