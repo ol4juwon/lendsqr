@@ -4,17 +4,16 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable('wallet', function (table) {
-    table
-      .uuid('id', { primaryKey: true })
-      .primary()
-      .defaultTo(knex.raw('(UUID())'));
+    table.increments('id', { primaryKey: true });
     table.float('balance', 8, 2).defaultTo(0.0).notNullable();
     table
-      .uuid('users_id')
+      .integer('users_id')
+      .unsigned()
       .unique()
       .notNullable()
       .references('id')
-      .inTable('users');
+      .inTable('users')
+      .onDelete('CASCADE');
     table
       .timestamp('created_at', { precision: 6, useTz: true })
       .defaultTo(knex.fn.now(6));

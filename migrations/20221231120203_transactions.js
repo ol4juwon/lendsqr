@@ -12,7 +12,12 @@ exports.up = function (knex) {
     table.enu('status', ['pending', 'failed', 'successful']).notNullable();
     table.string('gateway', 255).notNullable();
     table.string('channel', 255).notNullable();
-    table.uuid('users_id').notNullable().references('id').inTable('users');
+    table
+      .integer('users_id')
+      .unsigned()
+      .notNullable()
+      .references('id')
+      .inTable('users');
     table
       .timestamp('created_at', { precision: 6, useTz: true })
       .defaultTo(knex.fn.now(6));

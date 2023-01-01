@@ -17,8 +17,8 @@ import { JwtService } from '@nestjs/jwt';
     UsersModule,
     KnexModule.forRoot({
       config: {
-        client: 'mysql',
-        version: '5.7',
+        client: 'mysql2',
+        version: '8.0',
         useNullAsDefault: true,
         connection: {
           host: '127.0.0.1',

@@ -28,8 +28,25 @@ export class UsersService {
         createUserDto.password,
         10,
       );
-      const response = await this.knex('users').insert(createUserDto);
-      return { data: response };
+
+      const x = await this.knex.transaction(async (trx) => {
+        const response = await this.knex('users')
+          .insert(createUserDto, '*')
+          .transacting(trx)
+          .then((id) => {
+            return this.knex('wallet')
+              .insert({ users_id: id })
+              .transacting(trx)
+              .then((res) => {
+                return res;
+              });
+          })
+          .then(trx.commit)
+          .catch(trx.rollback);
+        console.log('uj', response);
+        return { data: response };
+      });
+      return { data: x };
     } catch (error) {
       return { error: error.sqlMessage || error.message || error.details };
     }
