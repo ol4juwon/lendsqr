@@ -4,6 +4,7 @@ import { Knex } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { timeStamp } from 'console';
 @Injectable()
 export class UsersService {
   constructor(@InjectConnection() private readonly knex: Knex) {}
@@ -90,6 +91,31 @@ export class UsersService {
       return null;
     } catch (error) {
       return null;
+    }
+  }
+  /**
+   * getDetails: Get users details
+   * @param user_id : int user id
+   * @returns error | userDetails object
+   */
+  async getDetails(user_id: number) {
+    try {
+      const response = await this.knex('users')
+        .select(
+          'users.id',
+          'users.firstName',
+          'users.lastName',
+          'users.username',
+          'users.email',
+          'wallet.balance',
+        )
+        .where({ 'users.id': user_id })
+        .join('wallet', { 'users.id': 'wallet.users_id' });
+      const details = response[0];
+      details;
+      return { data: response[0] };
+    } catch (error) {
+      return { error: error };
     }
   }
 }

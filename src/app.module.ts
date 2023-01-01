@@ -11,10 +11,12 @@ import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/auth.controller';
 import { UsersService } from './users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     UsersModule,
+    ConfigModule.forRoot(),
     KnexModule.forRoot({
       config: {
         client: 'mysql2',
@@ -34,6 +36,6 @@ import { JwtService } from '@nestjs/jwt';
     AuthModule,
   ],
   controllers: [AppController, AuthController],
-  providers: [AppService, AuthService, UsersService, JwtService],
+  providers: [AppService, AuthService, ConfigService, UsersService, JwtService],
 })
 export class AppModule {}

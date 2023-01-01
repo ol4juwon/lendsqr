@@ -3,12 +3,14 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from 'src/users/dto/login.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcryt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UsersService,
     private jwtservice: JwtService,
+    private configService: ConfigService,
   ) {}
   async validateUser(loginDto: LoginDto) {
     const user = await this.userService.getUser(loginDto.email);
@@ -33,10 +35,11 @@ export class AuthService {
     };
     return {
       accessToken: this.jwtservice.sign(payload, {
-        secret: '3rdJan__',
+        secret: this.configService.get('JWT_SECRET'),
         algorithm: 'HS256',
         expiresIn: '1h',
       }),
     };
   }
 }
+// configsevice get string?

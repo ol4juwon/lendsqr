@@ -1,7 +1,16 @@
-import { Controller, Post, Body, Response } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Response,
+  Get,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UsersController {
@@ -21,17 +30,19 @@ export class UsersController {
       return res.status(500).send({ error });
     }
   }
-  @Post('/login')
-  async login(@Response() res, @Body() loginDto: LoginDto) {
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/:id/')
+  async getDetails(@Response() res, @Param('id') user_id) {
+    console.log(user_id);
     try {
-      console.log('ee');
-      const { error, data } = await this.usersService.login(loginDto);
+      const { error, data } = await this.usersService.getDetails(user_id);
       if (error) {
         return res.status(400).send({ error });
       }
+
       return res.status(200).send({ data });
     } catch (error) {
-      return res.status(500).send(error);
+      return res.status(500).send('Contact support');
     }
   }
 }
