@@ -12,7 +12,8 @@ import { AuthController } from './auth/auth.controller';
 import { UsersService } from './users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import { TransactionsModule } from './transactions/transactions.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
   imports: [
     UsersModule,
@@ -34,6 +35,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     CardsModule,
     PaystackModule,
     AuthModule,
+    TransactionsModule,
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      maxListeners: 10,
+      ignoreErrors: false,
+      delimiter: '.',
+    }),
   ],
   controllers: [AppController, AuthController],
   providers: [AppService, AuthService, ConfigService, UsersService, JwtService],

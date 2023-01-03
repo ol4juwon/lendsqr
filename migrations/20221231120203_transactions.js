@@ -9,9 +9,13 @@ exports.up = function (knex) {
       .primary()
       .defaultTo(knex.raw('(UUID())'));
     table.float('amount', 14, 2).notNullable();
+    table.string('transactionId').notNullable();
     table.enu('status', ['pending', 'failed', 'successful']).notNullable();
     table.string('gateway', 255).notNullable();
-    table.string('channel', 255).notNullable();
+    table.string('channel', 14).notNullable(); //card/wallet/ussd/transfer
+    table.string('mode', 14).notNullable();
+    table.string('transactionType', 14).notNullable(); //Deposit/withdrawal/refund
+    table.string('description').notNullable().defaultTo('Fund charge');
     table
       .integer('users_id')
       .unsigned()
