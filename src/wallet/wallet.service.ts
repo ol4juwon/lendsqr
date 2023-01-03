@@ -9,11 +9,13 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ValidateBankDto } from './dto/validate-bank.dto';
 import { CreateRecpientDto } from 'src/paystack/dto/create-recipient.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { UsersService } from 'src/users/users.service';
 @Injectable()
 export class WalletService {
   constructor(
     @InjectConnection() private readonly knex: Knex,
     private paystackService: PaystackService,
+    private userService: UsersService,
   ) {}
   async create(createWalletDto: CreateWalletDto) {
     const walletExist = await this.knex('wallet').where({
@@ -90,17 +92,62 @@ export class WalletService {
     return { data };
   }
 
-  async withdraw(withdrawdto: WithdrawDto) {
+  async withdraw(withdrawdto: WithdrawDto, user: any) {
     const payload = { ...withdrawdto, source: 'balance' };
     const { error, data } = await this.paystackService.withdrawal(payload);
     if (error) return { error };
     return { data };
   }
-  async withdrawFinal(withdrawdto: any) {
+  async withdrawFinal(withdrawdto: any, user: any) {
     const { error, data } = await this.paystackService.withdrawalFinal(
       withdrawdto,
     );
     if (error) return { error };
     return { data };
+  }
+
+  async transferToUser(payload: any, user: any) {
+    try {
+      const response = await this.userService.getIdByUsername(payload.username);
+      if (response.error) return { error: 'Recepient not found' };
+      const recepientID = response.data;
+      const vwallet = (
+        await this.knex('wallet').where({ users_id: user.sub }).limit(1)
+      )[0];
+      console.log('Waallet', payload, vwallet);
+      if (Math.abs(payload.amount) > vwallet.balance)
+        return { error: 'Insufficient Balance' };
+      const trxResponse = await this.knex.transaction(async (trx) => {
+        // subtract from sender then add to recipient
+        return this.knex('wallet')
+          .transacting(trx)
+          .update({
+            balance: this.knex.raw(`?? - ${payload.amount}`, ['balance']),
+          })
+          .where({ users_id: user.sub })
+          .then(async () => {
+            return this.knex('wallet')
+              .update({
+                balance: this.knex.raw(`?? + ${payload.amount}`, ['balance']),
+              })
+              .where({ users_id: recepientID })
+              .then(trx.commit)
+              .catch((e) => {
+                trx.rollback();
+                throw e;
+              });
+          })
+          .then(() => {
+            return { data: 'success' };
+          })
+          .catch((e) => {
+            return { error: e };
+          });
+      });
+      return { data: 'transfer successfull' };
+    } catch (error) {
+      console.log('efrror', error);
+      return { error };
+    }
   }
 }

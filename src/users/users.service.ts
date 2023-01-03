@@ -93,6 +93,23 @@ export class UsersService {
       return null;
     }
   }
+
+  async getIdByUsername(username: string) {
+    try {
+      const response = await this.knex('users')
+        .where({
+          username: username,
+        })
+        .limit(1);
+      console.log(response[0].id);
+      if (response[0]) {
+        return { data: response[0].id };
+      }
+      return { error: 'not found' };
+    } catch (error) {
+      return { error: 'contact support' };
+    }
+  }
   /**
    * getDetails: Get users details
    * @param user_id : int user id

@@ -6,6 +6,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { CardsService } from 'src/cards/cards.service';
+import { UsersService } from 'src/users/users.service';
 
 @Module({
   controllers: [WalletController],
@@ -15,6 +16,7 @@ import { CardsService } from 'src/cards/cards.service';
     ConfigService,
     TransactionsService,
     CardsService,
+    UsersService,
   ],
   imports: [HttpModule],
 })
