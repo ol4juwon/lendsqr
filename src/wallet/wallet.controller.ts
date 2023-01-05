@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Response,
+  Query,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
@@ -37,6 +38,12 @@ export class WalletController {
   async findOne(@Param('id') id: string) {
     return this.walletService.getUserWallet(+id);
   }
+
+  @Get('')
+  async findAll(@Query() query: any) {
+    console.log(query);
+    return this.walletService.getAllWallet(query);
+  }
   @Post('/fund/card/init')
   async InitCardCharge(
     @Response() res: any,
@@ -44,7 +51,7 @@ export class WalletController {
     @Body() initChargeDto: InitChargeDto,
   ) {
     try {
-      const { error, data } = await this.walletService.chargeCard(
+      const { error, data } = await this.walletService.initCharge(
         initChargeDto,
         req.user,
       );

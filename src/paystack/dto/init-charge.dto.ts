@@ -11,4 +11,6 @@ export class InitChargeDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+
+  metadata: any;
 }

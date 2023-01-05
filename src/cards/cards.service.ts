@@ -1,11 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel, synchronize } from 'nestjs-objection/dist';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
+import { CardModel } from './model/cards.model';
 
 @Injectable()
 export class CardsService {
-  create(createCardDto: CreateCardDto) {
-    return 'This action adds a new card';
+  constructor(@InjectModel(CardModel) private readonly cardModel) {}
+  async create(createCardDto: CreateCardDto) {
+    try {
+      await synchronize(CardModel);
+      const x = await this.cardModel.query().insert(createCardDto);
+      console.log('adding card', x);
+      return { data: x };
+    } catch (e) {
+      console.log('errir card', Object.keys(e), e?.nativeError?.code);
+
+      return { error: e?.nativeError.sqlMessage || e.message };
+    }
   }
 
   findAll() {

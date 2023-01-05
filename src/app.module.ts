@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { KnexModule } from 'nest-knexjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -14,22 +13,30 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TransactionsModule } from './transactions/transactions.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ObjectionModule, Model } from 'nestjs-objection';
+import { Users } from './users/model/users.model';
+import { Wallet } from './wallet/model/wallet.model';
+import { Transactions } from './transactions/model/transactions.model';
+import { BanksService } from './banks/banks.service';
+import { BanksModule } from './banks/banks.module';
 @Module({
   imports: [
     UsersModule,
     ConfigModule.forRoot(),
-    KnexModule.forRoot({
-      config: {
-        client: 'mysql2',
-        version: '8.0',
-        useNullAsDefault: true,
-        connection: {
-          host: '127.0.0.1',
-          user: 'ola',
-          password: 'concheradmin',
-          database: 'lendsqr',
+    ObjectionModule.forRootAsync({
+      useFactory: () => ({
+        Model,
+        config: {
+          client: 'mysql',
+          useNullAsDefault: true,
+          connection: {
+            host: '127.0.0.1',
+            user: 'ola',
+            password: 'concheradmin',
+            database: 'lendsqr',
+          },
         },
-      },
+      }),
     }),
     WalletModule,
     CardsModule,
@@ -42,8 +49,17 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       ignoreErrors: false,
       delimiter: '.',
     }),
+    ObjectionModule.forFeature([Users, Wallet, Transactions]),
+    BanksModule,
   ],
   controllers: [AppController, AuthController],
-  providers: [AppService, AuthService, ConfigService, UsersService, JwtService],
+  providers: [
+    AppService,
+    AuthService,
+    ConfigService,
+    UsersService,
+    JwtService,
+    BanksService,
+  ],
 })
 export class AppModule {}

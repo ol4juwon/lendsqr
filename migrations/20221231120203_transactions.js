@@ -11,7 +11,7 @@ exports.up = function (knex) {
     table.float('amount', 14, 2).notNullable();
     table.string('transactionId').notNullable();
     table.enu('status', ['pending', 'failed', 'successful']).notNullable();
-    table.string('gateway', 255).notNullable();
+    table.string('gateway', 18).notNullable();
     table.string('channel', 14).notNullable(); //card/wallet/ussd/transfer
     table.string('mode', 14).notNullable();
     table.string('transactionType', 14).notNullable(); //Deposit/withdrawal/refund

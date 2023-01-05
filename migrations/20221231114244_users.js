@@ -9,6 +9,7 @@ exports.up = function (knex) {
     table.string('password', 255).notNullable();
     table.string('username', 20).unique().notNullable();
     table.string('lastName', 255).notNullable();
+    table.string('role', 10).notNullable();
     table.string('email', 255).unique().notNullable();
     table
       .timestamp('created_at', { precision: 6, useTz: true })

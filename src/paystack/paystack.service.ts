@@ -1,14 +1,12 @@
 import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InitChargeDto } from './dto/init-charge.dto';
 import { ChargeAuthDto } from './dto/charge-auth.dto';
 import { lastValueFrom, map } from 'rxjs';
 import { nanoid } from 'nanoid/async';
 import { TransactionsService } from 'src/transactions/transactions.service';
-import { Knex } from 'knex';
-import { InjectConnection } from 'nest-knexjs';
 import { CardsService } from 'src/cards/cards.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ValidateBankDto } from 'src/wallet/dto/validate-bank.dto';
@@ -22,7 +20,6 @@ export class PaystackService {
     private transactionService: TransactionsService,
     private cardService: CardsService,
     private emitter: EventEmitter2,
-    @InjectConnection() private knex: Knex,
   ) {}
   async initCharge(initChargeDto: InitChargeDto, user: any) {
     // /transaction/initialize
@@ -33,11 +30,11 @@ export class PaystackService {
       initChargeDto.amount = initChargeDto.amount * 100;
       const ref = await this.genRef();
       initChargeDto.reference = ref.data;
-      const data: any = initChargeDto;
-      const transaction = {
+      // const data: any = initChargeDto;
+      const transaction: any = {
         transactionId: initChargeDto.reference,
         users_id: user.sub,
-        amount: initChargeDto.amount,
+        amount: initChargeDto.amount / 100,
         description: 'Collection for a pending transaction',
         mode: 'CARD',
         channel: 'CARD',
@@ -45,39 +42,23 @@ export class PaystackService {
         status: 'pending',
         gateway: 'PAYSTACK',
       };
+      // transaction.metadata = initChargeDto;
       const trx = await this.transactionService.create(transaction);
       if (trx.error) {
         return { error: 'Error completing Transaction' };
       }
-      data.metadata = transaction;
-      // const response = await lastValueFrom(
-      //   this.httpService
-      //     .post(url, data, {
-      //       adapter: 'http',
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //         accept: 'application/json',
-      //         'cache-control': 'no-cache',
-      //         Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE}`,
-      //       },
-      //     })
-      //     .pipe(
-      //       map((res) => {
-      //         return res.data;
-      //       }),
-      //     )
-      //     .pipe(),
-      // );
-      const response = await this.request(url, 'Post', data);
+      initChargeDto.metadata = transaction;
+      const response = await this.request(url, 'Post', initChargeDto);
 
       if (response.data?.status) {
         return { data: response };
       }
-      console.log(response.error);
+      console.log('55', response.error);
       return {
         error: { error: response.error, status: response.error.status },
       };
     } catch (error) {
+      console.log('60: error', error);
       return { error: error.message || error };
     }
   }
@@ -119,46 +100,51 @@ export class PaystackService {
     }
   }
 
-  async verify(trx: string, dnab: boolean) {
+  async verify(trx: string, dnab?: boolean) {
     try {
       const url = `${this.configService.get(
         'PAYSTACK_BASE_URL',
       )}/transaction/verify/${trx}`;
       this.logger.debug('verifying');
-      const { data, error } = await lastValueFrom(
-        this.httpService
-          .get(url, {
-            adapter: 'http',
-            headers: {
-              'Content-Type': 'application/json',
-              accept: 'application/json',
-              'cache-control': 'no-cache',
-              Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE}`,
-            },
-          })
-          .pipe(
-            map((res) => {
-              return res.data;
-            }),
-          )
-          .pipe(),
-      );
-      this.logger.debug(data);
+      const { data, error } = await this.request(url, 'GET');
+      // this.logger.debug('112', data, error);
       if (error) {
         data.metadata.status = 'failed';
-        data.metadata.error = error.message || error.details;
-        this.emitter.emit('payment.verify.failed');
+        data.metadata.error = error;
+        this.emitter.emit('payment.verify.failed', data);
         return { error: error };
       }
-      if (data.status == 'success') {
-        //TODO: emit transaction success event
-        data.metadata.donotalter = dnab;
-        data.metadata.status = 'successful';
-        this.emitter.emit('payment.verify.success', data.metadata);
-        this.cardService.create(data.authorization);
-      }
       delete data.log;
-      delete data.authorization;
+      if (data.status) {
+        //TODO: emit transaction success event
+        data.data.metadata.donotalter = dnab ? dnab : false;
+        data.data.metadata.status = 'successful';
+        // this.logger.verbose('datum', data.data);
+        this.emitter.emit('payment.verify.success', data.data);
+        const { authorization } = data.data;
+        const { customer } = data.data;
+        const card = {
+          last4: authorization.last4,
+          bank: authorization.bank,
+          gateway: 'paystack',
+          bin: authorization.bin,
+          users_id: +data.data.metadata.users_id,
+          channel: authorization.channel,
+          exp: `${authorization.exp_month}/${authorization.exp_year}`,
+          cardAuth: authorization.authorization_code,
+          email: customer.email,
+          auth: authorization.auth,
+          customer: JSON.stringify(customer),
+          cardType: authorization.card_type,
+          reusable: authorization.reusable,
+          signature: authorization.signature,
+          brand: authorization.brand,
+          country_code: authorization.country_code,
+        };
+        console.log('card', card);
+        const cardResponse = await this.cardService.create(card);
+        this.logger.debug(cardResponse);
+      }
       const {
         id,
         status,
@@ -171,6 +157,10 @@ export class PaystackService {
         paid_at,
         created_at,
       } = data;
+      await this.transactionService.update(
+        data.data.metadata.transactionId,
+        data.data.metadata,
+      );
       const payload = {
         id,
         status,
@@ -252,10 +242,38 @@ export class PaystackService {
 
     return { data };
   }
-  async withdrawal({ source, reason, amount, recipient }: any) {
+
+  async transferDetails(id: string) {
     try {
-      const payload = { source, reason, amount, recipient };
+      const url = `${this.configService.get(
+        'PAYSTACK_BASE_URL',
+      )}/transfer/${id}`;
+      const { error, data } = await this.request(url, 'GET');
+      if (error) return { error };
+      return { data };
+    } catch (error) {
+      return { error: error };
+    }
+  }
+  async withdrawal({ source, reason, amount, recipient, user }: any) {
+    try {
+      const payload: any = { source, reason, amount, recipient };
       const url = `${this.configService.get('PAYSTACK_BASE_URL')}/transfer`;
+      const ref = await this.genRef();
+      const transaction: any = {
+        transactionId: ref.data,
+        users_id: user.sub,
+        amount: amount / 100,
+        description: 'Wallet withdrawal',
+        mode: 'Bank',
+        channel: 'Transfer',
+        transactionType: 'PAYMENT',
+        status: 'pending',
+        gateway: 'PAYSTACK',
+      };
+      const trx = await this.transactionService.create(transaction);
+      if (trx[0]) return { error: 'failed to complete' };
+      payload.metadata = transaction;
       const { error, data } = await this.request(url, 'Post', payload);
       if (error) return { error };
       return { data };
@@ -290,16 +308,16 @@ export class PaystackService {
           Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE}`,
         },
       });
-      if (response.data) return { data: response.data };
+      if (response?.data) return { data: response?.data };
 
       return { error: response };
     } catch (error) {
-      console.log('285', Object.keys(error.response));
+      console.log('285', error?.response.data);
       return {
         error: {
-          error: error?.response.data || error.code,
-          status: error?.response.status,
-          errorMessage: error?.response.statusText,
+          error: error?.response?.data || error.code,
+          status: error?.response?.status,
+          errorMessage: error?.response?.statusText,
         },
       };
     }

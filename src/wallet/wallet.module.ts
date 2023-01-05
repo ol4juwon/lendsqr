@@ -7,6 +7,11 @@ import { ConfigService } from '@nestjs/config';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { CardsService } from 'src/cards/cards.service';
 import { UsersService } from 'src/users/users.service';
+import { ObjectionModule } from 'nestjs-objection';
+import { Wallet } from './model/wallet.model';
+import { Users } from 'src/users/model/users.model';
+import { Transactions } from 'src/transactions/model/transactions.model';
+import { CardModel } from 'src/cards/model/cards.model';
 
 @Module({
   controllers: [WalletController],
@@ -18,6 +23,9 @@ import { UsersService } from 'src/users/users.service';
     CardsService,
     UsersService,
   ],
-  imports: [HttpModule],
+  imports: [
+    HttpModule,
+    ObjectionModule.forFeature([Wallet, Users, Transactions, CardModel]),
+  ],
 })
 export class WalletModule {}

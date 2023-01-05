@@ -3,9 +3,11 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable('wallet', function (table) {
+  return knex.schema.createTable('banks', function (table) {
     table.increments('id', { primaryKey: true });
-    table.float('balance', 14, 2).defaultTo(0.0).notNullable();
+    table.string('bank_code', 10).notNullable();
+    table.string('account_number', 10).notNullable();
+    table.string('account_name', 255).notNullable();
     table
       .integer('users_id')
       .unsigned()
@@ -28,5 +30,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTable('wallet');
+  return knex.schema.dropTable('banks');
 };

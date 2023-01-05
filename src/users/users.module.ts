@@ -6,6 +6,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from '../auth/local.auth';
 import { AuthService } from 'src/auth/auth.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Users } from './model/users.model';
+import { ObjectionModule } from 'nestjs-objection/dist';
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       secret: 'secretKey',
       signOptions: { expiresIn: '60s' },
     }),
+    ObjectionModule.forFeature([Users]),
   ],
   controllers: [UsersController],
   providers: [AuthService, ConfigService, UsersService, LocalStrategy],

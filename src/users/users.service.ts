@@ -1,13 +1,17 @@
-import { Injectable, NotAcceptableException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Knex } from 'knex';
-import { InjectConnection } from 'nest-knexjs';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
-import { timeStamp } from 'console';
+import { InjectModel, synchronize } from 'nestjs-objection/dist';
+import { Users } from './model/users.model';
 @Injectable()
 export class UsersService {
-  constructor(@InjectConnection() private readonly knex: Knex) {}
+  constructor(@InjectModel(Users) private readonly userModel) {}
 
   /**
    *
@@ -16,11 +20,11 @@ export class UsersService {
    */
   async create(createUserDto: CreateUserDto) {
     try {
-      const emailExists = await this.knex('users').where({
+      const emailExists = await this.userModel.query().where({
         email: createUserDto.email,
       });
       if (emailExists[0]) return { error: 'user with email already exists' };
-      const usernameExists = await this.knex('users').where({
+      const usernameExists = await this.userModel.query().where({
         username: createUserDto.username,
       });
       if (usernameExists[0])
@@ -29,33 +33,58 @@ export class UsersService {
         createUserDto.password,
         10,
       );
-
-      const x = await this.knex.transaction(async (trx) => {
-        const response = await this.knex('users')
-          .insert(createUserDto, '*')
-          .transacting(trx)
-          .then((id) => {
-            return this.knex('wallet')
-              .insert({ users_id: id })
-              .transacting(trx)
-              .then((res) => {
-                return res;
-              });
-          })
-          .then(trx.commit)
-          .catch(trx.rollback);
-        console.log('uj', response);
-        return { data: response };
-      });
-      return { data: x };
+      // const user = await this.userModel.query().insert(createUserDto);
+      const role = createUserDto.roles.join(',');
+      delete createUserDto.roles;
+      const newUser = { ...createUserDto, role };
+      const trx = await this.userModel
+        .transaction(async (trx) => {
+          const addingUser = await this.userModel.query().insert(newUser);
+          console.log(addingUser);
+          const wallet = await addingUser
+            .$relatedQuery('wallet', trx)
+            .insert({ users_id: addingUser[0] });
+          return wallet;
+        })
+        .catch((error) => {
+          return { error };
+        });
+      console.log('Done', trx);
+      return { data: trx };
     } catch (error) {
       return { error: error.sqlMessage || error.message || error.details };
     }
   }
+  async findAll() {
+    try {
+      await synchronize(Users);
 
+      const user = await this.userModel
+        .query()
+        .select('*')
+        .withGraphFetched('wallet')
+        .withGraphFetched('transactions')
+        .withGraphFetched('banks')
+        .modifyGraph('wallet', (w) => w.select(['wallet.balance']))
+        .modifyGraph('transactions', (t: any) =>
+          t
+            .select([
+              'transactions.id',
+              'transactions.amount',
+              'transactions.status',
+            ])
+            .limit(10)
+            .orderBy('transactions.created_at', 'ASC'),
+        );
+      return { data: user };
+    } catch (error) {
+      return { error };
+    }
+  }
   async login(loginDto: LoginDto) {
     try {
-      const response = await this.knex('users')
+      const response = await this.userModel
+        .query()
         .where({
           email: loginDto.email,
         })
@@ -78,13 +107,17 @@ export class UsersService {
     }
   }
   async getUser(email: string) {
+    await synchronize(Users);
+    console.log('eee', email);
     try {
-      const response = await this.knex('users')
+      const response = await this.userModel
+        .query()
+        .select()
         .where({
           email: email,
         })
         .limit(1);
-      console.log(response[0]);
+      console.log(response);
       if (response[0]) {
         return response[0];
       }
@@ -96,7 +129,8 @@ export class UsersService {
 
   async getIdByUsername(username: string) {
     try {
-      const response = await this.knex('users')
+      const response = await this.userModel
+        .query()
         .where({
           username: username,
         })
@@ -117,19 +151,20 @@ export class UsersService {
    */
   async getDetails(user_id: number) {
     try {
-      const response = await this.knex('users')
-        .select(
+      const response = await this.userModel
+        .query()
+        .select([
           'users.id',
           'users.firstName',
           'users.lastName',
           'users.username',
           'users.email',
           'wallet.balance',
-        )
+        ])
         .where({ 'users.id': user_id })
         .join('wallet', { 'users.id': 'wallet.users_id' });
-      const details = response[0];
-      details;
+      if (!response[0])
+        throw new NotFoundException('User with the id not found');
       return { data: response[0] };
     } catch (error) {
       return { error: error };
