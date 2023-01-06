@@ -17,11 +17,17 @@ export class TransactionsService {
       const response = await this.transationsModel
         .query()
         .insert(createTransactionDto);
-      console.log(response);
-      return { data: response[0] };
+      console.log('ddd', response);
+      return { data: response };
     } catch (error) {
       console.log(error);
-      return { error: error };
+      return {
+        error:
+          error?.nativeError.sqlMessage ||
+          error.message ||
+          error.details ||
+          error,
+      };
     }
   }
 
@@ -29,8 +35,17 @@ export class TransactionsService {
     return `This action returns all transactions`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} transaction`;
+  async findOne(id: string) {
+    try {
+      const response = await this.transationsModel
+        .query()
+        .findOne({ transactionId: id });
+      console.log('response', response);
+      if (!response) return { error: 'Not found' };
+      return { data: response };
+    } catch (error) {
+      return { error };
+    }
   }
 
   async update(id: string, updateTransactionDto: UpdateTransactionDto) {

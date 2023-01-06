@@ -21,6 +21,7 @@ import { ValidateBankDto } from './dto/validate-bank.dto';
 import { CreateRecpientDto } from 'src/paystack/dto/create-recipient.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
 import { TransferUserDTO } from './dto/transfer-user.dto';
+import { ChargeAuthDto } from 'src/paystack/dto/charge-auth.dto';
 @UseGuards(AuthGuard('jwt'))
 @Controller('wallet')
 export class WalletController {
@@ -62,6 +63,18 @@ export class WalletController {
     } catch (error) {
       res.status(500).send({ error });
     }
+  }
+
+  @Post('/fund/card/charge')
+  async cardCharge(
+    @Response() res: any,
+    @Request() req: any,
+    @Body() chargeAuthDto: ChargeAuthDto,
+  ) {
+    const { error, data } = await this.walletService.chargeCard(chargeAuthDto);
+    if (error) return res.status(400).send({ error });
+
+    return res.status(200).send({ data });
   }
 
   @Post('/withdraw/validate/bank')

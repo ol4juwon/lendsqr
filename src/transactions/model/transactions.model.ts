@@ -14,7 +14,7 @@ export class Transactions extends Model {
 
   @Column({ type: columnTypes.string })
   mode: string;
-  @Column({ type: columnTypes.string })
+  @Column({ type: columnTypes.string, unique: true })
   transactionId: string;
 
   @Column({ type: columnTypes.string })

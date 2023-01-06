@@ -13,6 +13,7 @@ import { UsersService } from 'src/users/users.service';
 import { InjectModel, synchronize } from 'nestjs-objection/dist';
 import { Wallet } from './model/wallet.model';
 import Objection from 'objection';
+import { ChargeAuthDto } from 'src/paystack/dto/charge-auth.dto';
 @Injectable()
 export class WalletService {
   constructor(
@@ -96,6 +97,13 @@ export class WalletService {
     return { data: data };
   }
 
+  async chargeCard(chargeCardAuthDto: ChargeAuthDto) {
+    const { error, data } = await this.paystackService.chargeAuth(
+      chargeCardAuthDto,
+    );
+    if (error) return { error };
+    return { data };
+  }
   @OnEvent('payment.verify.success')
   async paymentSuccessFul(msg: any) {
     console.log('Message Received: ', msg.metadata, msg.metadata.donotalter);

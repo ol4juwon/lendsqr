@@ -9,7 +9,7 @@ exports.up = function (knex) {
       .primary()
       .defaultTo(knex.raw('(UUID())'));
     table.float('amount', 14, 2).notNullable();
-    table.string('transactionId').notNullable();
+    table.string('transactionId').notNullable().unique();
     table.enu('status', ['pending', 'failed', 'successful']).notNullable();
     table.string('gateway', 18).notNullable();
     table.string('channel', 14).notNullable(); //card/wallet/ussd/transfer

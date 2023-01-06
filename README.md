@@ -20,3 +20,8 @@
 - Wallet [/wallet]
   1. get user wallet[/:id][GET]
   2. Get all users [/?queries][GET]
+
+
+<p align="center">
+  <img src="er.png" width="350" title="hover text">
+</p>
