@@ -7,7 +7,7 @@ exports.up = function (knex) {
     table
       .uuid('id', { primaryKey: true })
       .primary()
-      .defaultTo(knex.raw('(UUID())'));
+      .defaultTo(knex.raw(`UUID_TO_BIN(UUID(), true)`));
     table.float('amount', 14, 2).notNullable();
     table.string('transactionId').notNullable().unique();
     table.enu('status', ['pending', 'failed', 'successful']).notNullable();

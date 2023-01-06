@@ -10,7 +10,7 @@ exports.up = function (knex) {
     table.string('bank', 255).notNullable();
     table.string('last4', 4).notNullable();
     table.string('cardType', 20).notNullable();
-    table.json('customer', 255).notNullable();
+    table.text('customer', 255).notNullable();
     table.string('email', 50).notNullable();
     table.string('brand', 20).notNullable();
     table.string('signature', 28).notNullable();

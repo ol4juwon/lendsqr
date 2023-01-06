@@ -13,7 +13,6 @@ export class ChargeAuthDto {
   @IsPositive()
   amount: number;
 
-
   @IsNotEmpty()
   @IsString()
   email: string;

@@ -3,22 +3,24 @@
  */
 module.exports = {
   development: {
-    client: 'mysql',
+    client: 'mysql2',
+    useNullAsDefault: true,
     connection: {
-      host: '127.0.0.1',
-      user: 'ola',
-      password: 'concheradmin',
-      database: 'lendsqr',
+      host: 'us-cdbr-east-06.cleardb.net',
+      user: 'b3742b37b1e256',
+      password: '4f50d6f5',
+      database: 'heroku_4c7c865c7df2a21',
     },
   },
 
   staging: {
-    client: 'mysql',
+    client: 'mysql2',
+    useNullAsDefault: true,
     connection: {
-      host: '127.0.0.1',
-      user: 'ola',
-      password: 'concheradmin',
-      database: 'lendsqr',
+      host: 'us-cdbr-east-06.cleardb.net',
+      user: 'b3742b37b1e256',
+      password: '4f50d6f5',
+      database: 'heroku_4c7c865c7df2a21',
     },
     pool: {
       min: 2,
@@ -30,12 +32,12 @@ module.exports = {
   },
 
   production: {
-    client: 'mysql',
+    client: 'mysql2',
     connection: {
-      host: '127.0.0.1',
-      user: 'ola',
-      password: 'concheradmin',
-      database: 'lendsqr',
+      host: 'us-cdbr-east-06.cleardb.net',
+      user: 'b3742b37b1e256',
+      password: '4f50d6f5',
+      database: 'heroku_4c7c865c7df2a21',
     },
     pool: {
       min: 2,
