@@ -223,15 +223,20 @@ export class PaystackService {
     return { data: banks };
   }
   async verifyAccountNumber(account: ValidateBankDto) {
-    const { account_number, bank_code } = account;
-    const url = `${this.configService.get(
-      'PAYSTACK_BASE_URL',
-    )}/bank/resolve?account_number=${account_number}&bank_code=${bank_code}`;
-    const response = await this.request(url, 'GET');
-    if (response.error) return { error: response.error };
-    const account_name = response.data.data.account_name;
+    try {
+      const { account_number, bank_code } = account;
+      const url = `${this.configService.get(
+        'PAYSTACK_BASE_URL',
+      )}/bank/resolve?account_number=${account_number}&bank_code=${bank_code}`;
+      const response = await this.request(url, 'GET');
+      if (response.error) return { error: response.error };
+      const account_name = response.data.data.account_name;
 
-    return { data: { account_number, bank_code, account_name } };
+      return { data: { account_number, bank_code, account_name } };
+    } catch (error) {
+      console.log('error', error);
+      return { error: error };
+    }
   }
   async createRecipient(createRecipient: CreateRecpientDto) {
     const url = `${this.configService.get(

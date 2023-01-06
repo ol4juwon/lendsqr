@@ -77,7 +77,7 @@ export class WalletController {
     return res.status(200).send({ data });
   }
 
-  @Post('/withdraw/validate/bank')
+  @Post('/bank/validate')
   async validateBank(
     @Response() res,
     @Body() validateBankDto: ValidateBankDto,
@@ -93,7 +93,7 @@ export class WalletController {
     }
   }
 
-  @Post('/withdraw/addBank')
+  @Post('/bank')
   async addBank(
     @Response() res: any,
     @Body() createRecipient: CreateRecpientDto,
@@ -108,7 +108,7 @@ export class WalletController {
     return res.status(201).send({ data });
   }
 
-  @Post('withdraw')
+  @Post('withdraw/init')
   async withdraw(
     @Response() res: any,
     @Body() withdrawDto: WithdrawDto,
